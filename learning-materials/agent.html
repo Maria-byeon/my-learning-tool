@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概念学习：AI Agent（智能体）</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --ink-soft: #5b6472;
+    --brand: #4f6ef7;
+    --brand-dark: #3a56d4;
+    --brand-soft: #eef1fe;
+    --accent: #0ea47a;
+    --accent-soft: #e6f7f1;
+    --warn: #d97706;
+    --warn-soft: #fdf3e3;
+    --line: #e6e8f0;
+    --radius: 16px;
+    --shadow: 0 6px 24px rgba(31, 36, 48, .06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  /* 头部 */
+  header.hero {
+    background: linear-gradient(135deg, #4f6ef7 0%, #7b5cf0 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 40px 36px 36px;
+    box-shadow: 0 12px 32px rgba(79, 110, 247, .28);
+    margin-bottom: 28px;
+  }
+  header.hero .tag {
+    display: inline-block; font-size: 13px; letter-spacing: .12em;
+    background: rgba(255,255,255,.18); border-radius: 999px;
+    padding: 4px 14px; margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 34px; line-height: 1.3; margin-bottom: 10px; }
+  header.hero p.sub { color: rgba(255,255,255,.85); font-size: 16px; }
+
+  /* 目标卡片 */
+  .goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 20px 0 32px; }
+  .goal-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .goal-card .num {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 15px; margin-bottom: 10px;
+  }
+  .goal-card p { color: var(--ink-soft); font-size: 14.5px; }
+
+  /* 章节 */
+  section.block {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  section.block h2 {
+    font-size: 21px; display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+  }
+  section.block h2 .ico {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px;
+    background: var(--brand-soft); color: var(--brand);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  section.block h3 { font-size: 16.5px; margin: 20px 0 8px; color: var(--ink); }
+  section.block p { color: var(--ink-soft); margin-bottom: 12px; }
+  section.block ul, section.block ol { color: var(--ink-soft); padding-left: 22px; margin-bottom: 12px; }
+  section.block li { margin-bottom: 8px; }
+  strong { color: var(--ink); }
+  .hl { background: var(--brand-soft); color: var(--brand-dark); padding: 0 5px; border-radius: 5px; font-weight: 600; }
+
+  .callout {
+    border-left: 4px solid var(--brand); background: var(--brand-soft);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0; font-size: 15px;
+  }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.good { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* 机制循环图（纯CSS） */
+  .loop { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; justify-content: center; margin: 22px 0; }
+  .loop .node {
+    background: var(--brand-soft); border: 1.5px solid var(--brand); color: var(--brand-dark);
+    border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 14.5px; text-align: center;
+    min-width: 100px;
+  }
+  .loop .arrow { display: flex; align-items: center; color: var(--ink-soft); font-size: 20px; font-weight: 700; }
+  .loop .note { flex-basis: 100%; text-align: center; color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
+
+  /* 组成四格 */
+  .comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 18px 0; }
+  .comp {
+    background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 18px;
+  }
+  .comp .t { font-weight: 700; color: var(--ink); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .comp .d { font-size: 13.5px; color: var(--ink-soft); }
+
+  /* 辨析表 */
+  table.diff { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  table.diff th {
+    text-align: left; background: var(--brand-soft); color: var(--brand-dark);
+    padding: 10px 12px; border: 1px solid var(--line); font-weight: 600;
+  }
+  table.diff td { padding: 10px 12px; border: 1px solid var(--line); color: var(--ink-soft); vertical-align: top; }
+  table.diff td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  /* 场景 */
+  .scenario {
+    background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin: 12px 0;
+  }
+  .scenario .step { display: flex; gap: 12px; margin-bottom: 12px; }
+  .scenario .step:last-child { margin-bottom: 0; }
+  .scenario .badge {
+    flex: 0 0 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  }
+  .scenario .txt { font-size: 14.5px; color: var(--ink-soft); }
+
+  /* 测验 */
+  .quiz-item {
+    background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .quiz-item .q { font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+  .quiz-item .q .qn {
+    display: inline-block; background: var(--warn); color: #fff; border-radius: 7px;
+    padding: 1px 9px; font-size: 12.5px; margin-right: 8px; vertical-align: 2px;
+  }
+  .quiz-item .opts { display: grid; gap: 8px; margin-bottom: 10px; }
+  .quiz-item .opt {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 14px; font-size: 14.5px;
+    color: var(--ink-soft); cursor: pointer; transition: all .15s; background: #fff;
+  }
+  .quiz-item .opt:hover { border-color: var(--brand); background: var(--brand-soft); }
+  .quiz-item .opt.sel { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-dark); font-weight: 600; }
+  .quiz-item .opt.correct { border-color: var(--accent); background: var(--accent-soft); color: #067a58; font-weight: 600; }
+  .quiz-item .opt.wrong { border-color: #e25563; background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb { display: none; font-size: 14px; padding: 10px 14px; border-radius: 10px; margin-top: 6px; }
+  .quiz-item .fb.show { display: block; }
+  .quiz-item .fb.ok { background: var(--accent-soft); color: #067a58; }
+  .quiz-item .fb.no { background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb b { display: block; margin-bottom: 2px; }
+
+  /* 资料来源 */
+  ol.sources li { margin-bottom: 12px; font-size: 14.5px; }
+  ol.sources a { color: var(--brand); text-decoration: none; font-weight: 600; word-break: break-all; }
+  ol.sources a:hover { text-decoration: underline; }
+  ol.sources .desc { color: var(--ink-soft); font-size: 13.5px; display: block; }
+
+  footer { text-align: center; color: #a0a6b4; font-size: 13px; margin-top: 28px; }
+  @media (max-width: 560px) {
+    section.block { padding: 22px 18px; }
+    header.hero { padding: 30px 22px; }
+    header.hero h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 头部 -->
+  <header class="hero">
+    <span class="tag">CONCEPT · 概念学习资料</span>
+    <h1>AI Agent（智能体）</h1>
+    <p class="sub">本资料默认按 AI 领域的「智能体」讲解——一种能自己规划、调用工具、完成任务闭环的 AI 系统。</p>
+  </header>
+
+  <!-- 学习目标 -->
+  <section class="block">
+    <h2><span class="ico">🎯</span>学习目标</h2>
+    <div class="goal-grid">
+      <div class="goal-card"><div class="num">1</div><p>能用自己的话讲清「Agent 是什么」，并说清它与普通聊天机器人的区别。</p></div>
+      <div class="goal-card"><div class="num">2</div><p>能拆解 Agent 的四个核心组成（大模型 / 规划 / 记忆 / 工具），画出它的工作循环。</p></div>
+      <div class="goal-card"><div class="num">3</div><p>能判断一个真实系统算不算 Agent，并说出它的典型局限与适用边界。</p></div>
+    </div>
+  </section>
+
+  <!-- 核心问题 -->
+  <section class="block">
+    <h2><span class="ico">❓</span>带着 3 个核心问题去学</h2>
+    <ul>
+      <li><strong>问题一：</strong>同样在对话框里打字，为什么有的 AI 只是「聊天」，有的却被称为「Agent」？分界线到底在哪？</li>
+      <li><strong>问题二：</strong>一个 Agent 从接到任务到完成任务，中间经历了哪些环节？每个环节由谁负责？</li>
+      <li><strong>问题三：</strong>「什么都能干」的 Agent 为什么没有完全取代人工？它靠不住的地方在哪？</li>
+    </ul>
+    <p style="margin-top:10px;">学完后试着用这三句话自检：能不能答上来、能不能举例、能不能反驳。</p>
+  </section>
+
+  <!-- 个人化解释 -->
+  <section class="block">
+    <h2><span class="ico">💡</span>个人化解释：把 Agent 当成「有手有脑的实习生」</h2>
+    <p>把 AI 想象成人，区分就清楚了：</p>
+    <ul>
+      <li><strong>普通聊天机器人</strong>像一个「只能聊天的顾问」——你问一句，它答一句。它不会主动去查资料、不会动手干活，聊完就结束。</li>
+      <li><strong>Agent（智能体）</strong>则像一个「有手有脑的实习生」——你交给它一个<b>目标</b>（比如「帮我整理本月时政热点」），它会自己琢磨该分几步做：先上网搜 → 再筛选 → 再排版 → 中途发现材料不够还会回头再搜 → 最后把成品交给你。整个过程<b>不需要你一步步指挥</b>。</li>
+    </ul>
+    <div class="callout">
+      一句话记忆：<strong>聊天机器人回答你，Agent 替你办事。</strong>Agent = 大模型这颗「大脑」+ 能动手的「工具」+ 自己安排步骤的「主动性」。
+    </div>
+  </section>
+
+  <!-- 核心机制拆解 -->
+  <section class="block">
+    <h2><span class="ico">⚙️</span>核心机制与组成拆解</h2>
+
+    <h3>① 它的工作循环（Agentic Loop）</h3>
+    <p>Agent 的本质是一个<b>「感知 → 思考 → 行动 → 观察 → 再思考」</b>的循环，直到目标达成或主动停下：</p>
+    <div class="loop">
+      <div class="node">🎯 目标输入</div>
+      <div class="arrow">→</div>
+      <div class="node">🧠 规划<br><span style="font-weight:400;font-size:12px">拆解任务、决定下一步</span></div>
+      <div class="arrow">→</div>
+      <div class="node">🛠️ 行动<br><span style="font-weight:400;font-size:12px">调用工具/检索/执行</span></div>
+      <div class="arrow">→</div>
+      <div class="node">👀 观察<br><span style="font-weight:400;font-size:12px">读取工具返回结果</span></div>
+      <div class="arrow">→</div>
+      <div class="node">✅ 完成 / 继续</div>
+      <div class="note">循环的关键：每一步的结果都会喂回给大模型，用来修正下一步——这叫「让模型自己决定路径」。</div>
+    </div>
+
+    <h3>② 四个核心组成</h3>
+    <div class="comp-grid">
+      <div class="comp">
+        <div class="t">🧠 大模型（大脑）</div>
+        <div class="d">负责理解、推理与决策：读任务、想方案、判断结果好不好。是整个 Agent 的「控制器」。</div>
+      </div>
+      <div class="comp">
+        <div class="t">🗺️ 规划（路径）</div>
+        <div class="d">把大目标拆成小步骤（任务分解），常见方法如 ReAct（边推理边行动）、思维链等。遇到错误能反思、调整计划。</div>
+      </div>
+      <div class="comp">
+        <div class="t">🧾 记忆（档案）</div>
+        <div class="d">短期记忆=当前对话上下文；长期记忆=存到外部（向量数据库、知识库），下次还能调用。</div>
+      </div>
+      <div class="comp">
+        <div class="t">🔧 工具（手脚）</div>
+        <div class="d">搜索、查数据库、写代码、发消息、操作软件……模型通过「函数调用」使用工具，MCP 则是给工具统一接口的协议。</div>
+      </div>
+    </div>
+
+    <h3>③ 为什么现在才火起来</h3>
+    <p>2022 年后大模型有了更强的<b>推理能力</b>和<b>函数调用（Function Calling）</b>能力——模型不只是输出文字，还能按格式「申请调用某个工具」，这是 Agent 能动手的关键前提。之后出现了一批代表框架与研究：ReAct（2022）、AutoGPT（2023）、LangChain / AutoGen / CrewAI、OpenAI Agents SDK、Anthropic 的 MCP 协议等。</p>
+  </section>
+
+  <!-- 应用场景 -->
+  <section class="block">
+    <h2><span class="ico">🚀</span>一个具体应用场景：AI 备考学伴</h2>
+    <p>假设你正在备考，想搭建一个「时政热点整理 Agent」，你只需要给它一个目标，它自己走完这套流程：</p>
+    <div class="scenario">
+      <div class="step"><span class="badge">1</span><div class="txt"><strong>接收目标：</strong>「整理本周与申论、新传相关的时政热点，每条约 200 字，标注可用论点。」</div></div>
+      <div class="step"><span class="badge">2</span><div class="txt"><strong>规划拆解：</strong>搜新闻 → 按主题聚类 → 筛掉无关资讯 → 撰写条目 → 输出卡片。</div></div>
+      <div class="step"><span class="badge">3</span><div class="txt"><strong>行动 + 观察：</strong>调用新闻搜索工具 → 发现某条来源存疑 → 换关键词再搜核实 → 结果合格才采用。</div></div>
+      <div class="step"><span class="badge">4</span><div class="txt"><strong>交付：</strong>生成带「事件 / 背景 / 意义 / 可用论点」结构的素材卡片，存入你的笔记体系，供申论与专业课共用。</div></div>
+    </div>
+    <div class="callout good">
+      这个场景里，Agent 的价值是<b>把「搜集—筛选—整理」这类重复劳动自动化</b>，让你把时间花在真正需要判断力的地方——比如论点怎么用、材料怎么组织。
+    </div>
+  </section>
+
+  <!-- 辨析与边界 -->
+  <section class="block">
+    <h2><span class="ico">⚠️</span>容易混淆的地方 &amp; 使用边界</h2>
+
+    <h3>① 四组高频混淆概念</h3>
+    <table class="diff">
+      <tr><th>概念</th><th>关键区别</th></tr>
+      <tr><td>Agent vs 聊天机器人</td><td>聊天机器人是「一问一答」；Agent 能自主规划、调用工具、多轮迭代直到完成任务。</td></tr>
+      <tr><td>Agent vs 工作流（Workflow）</td><td>工作流是「写死的固定流程」（如：抓取→清洗→输出）；Agent 由模型<b>每次动态决定</b>走哪条路。工作流可控但死板，Agent 灵活但难预测。</td></tr>
+      <tr><td>Agent vs RAG 问答</td><td>RAG（检索增强生成）只是「先查资料再回答」，通常没有行动循环；Agent 可以<b>反复查询、操作、验证</b>。</td></tr>
+      <tr><td>AI 的 Agent vs 传播学里的 agent</td><td>在传播学/社会学语境（如行动者网络理论）中 agent 常指「行动者/能动者」，含义完全不同。看资料时先分清语境，别混用。</td></tr>
+    </table>
+
+    <h3>② 使用边界：Agent 目前靠不住的地方</h3>
+    <ul>
+      <li><strong>幻觉与事实错误：</strong>模型可能自信地编造信息，涉及数据、法条、政策原文时必须人工核验。</li>
+      <li><strong>长任务会「跑偏」：</strong>步骤越多，错误越容易累积，可能绕圈子或半途而废，需要设置上限与检查点。</li>
+      <li><strong>成本与速度：</strong>自主循环意味着多次调用模型和工具，比单次问答更贵、更慢。</li>
+      <li><strong>安全与权限：</strong>让 AI 动手操作真实系统有风险，应遵循最小权限，关键操作保留「人在环」（人工确认）。</li>
+      <li><strong>适用范围：</strong>结果可验证、步骤可拆解、环境可交互的任务适合 Agent；一次性的简单问答、需要高度创意或极高准确率的场合未必划算。</li>
+    </ul>
+    <div class="callout warn">
+      记住这句判断口诀：<strong>「能交给 Agent 的，是那些你愿意反复检查的任务」</strong>——自主不等于可靠，边界感才是用好它的关键。
+    </div>
+  </section>
+
+  <!-- 自测 -->
+  <section class="block">
+    <h2><span class="ico">📝</span>3 道自测题（点选项查看结果）</h2>
+
+    <div class="quiz-item" data-answer="B">
+      <div class="q"><span class="qn">第 1 题</span>下列哪一项最能体现「Agent」与普通聊天机器人的本质区别？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. Agent 的回复措辞更专业、更像真人</div>
+        <div class="opt" data-key="B">B. Agent 能自主规划步骤并调用工具，迭代推进直到完成任务</div>
+        <div class="opt" data-key="C">C. Agent 的回答永远正确、不会出错</div>
+        <div class="opt" data-key="D">D. Agent 可以离线运行，不需要联网</div>
+      </div>
+      <div class="fb"><b>解析</b>区别的核心在「能不能自己动手干完一件事」——规划 + 工具调用 + 循环迭代，而不是语气或正确率（C、D 本身是常见误解）。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="C">
+      <div class="q"><span class="qn">第 2 题</span>在 Agent 的「感知—规划—行动—观察」循环中，哪一环通常由大语言模型承担？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 只有「行动」环节，工具调用全由模型完成</div>
+        <div class="opt" data-key="B">B. 只有「观察」环节，读取结果是模型的本职</div>
+        <div class="opt" data-key="C">C. 规划与决策环节——模型作为「大脑」决定下一步做什么</div>
+        <div class="opt" data-key="D">D. 以上所有环节都只能靠外部代码，模型不参与</div>
+      </div>
+      <div class="fb"><b>解析</b>大模型是 Agent 的「控制器」：理解目标、做规划、判断结果都由它负责；行动要靠工具，观察靠读取工具返回，但这些决策都出自模型。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="A">
+      <div class="q"><span class="qn">第 3 题</span>关于 Agent 的「记忆」，下列说法正确的是？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 短期记忆≈上下文窗口；长期记忆通常存放在外部（如向量数据库），可供后续任务复用</div>
+        <div class="opt" data-key="B">B. Agent 不需要记忆，每次任务都从零开始最可靠</div>
+        <div class="opt" data-key="C">C. 记忆只指模型的训练数据，与当前任务无关</div>
+        <div class="opt" data-key="D">D. 上下文窗口无限大，长期记忆永远装得下</div>
+      </div>
+      <div class="fb"><b>解析</b>上下文窗口有限，跨任务、跨会话的信息要靠外部存储（向量库、知识库等）实现长期记忆；B、C、D 都是对记忆机制的误解。</div>
+    </div>
+  </section>
+
+  <!-- 资料来源 -->
+  <section class="block">
+    <h2><span class="ico">🔗</span>可核查的资料来源</h2>
+    <ol class="sources">
+      <li><a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">Anthropic：Building Effective Agents（官方工程指南）</a>
+        <span class="desc">业界权威的 Agent 与工作流辨析，给出了「何时该用 Agent、何时该用工作流」的判断标准。</span></li>
+      <li><a href="https://python.langchain.com/docs/concepts/agents/" target="_blank" rel="noopener">LangChain 官方文档：Agents 概念</a>
+        <span class="desc">主流 Agent 框架对 Agent、工具调用、循环机制的系统讲解。</span></li>
+      <li><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct: Synergizing Reasoning and Acting in Language Models（论文）</a>
+        <span class="desc">提出「边推理边行动」范式的原始论文，理解 Agent 循环的起点。</span></li>
+      <li><a href="https://arxiv.org/abs/2308.11432" target="_blank" rel="noopener">A Survey on LLM-based Autonomous Agents（综述论文）</a>
+        <span class="desc">系统梳理 LLM 智能体的组成模块（规划/记忆/工具）与前沿方向，可当作扩展阅读。</span></li>
+      <li><a href="https://microsoft.github.io/autogen/" target="_blank" rel="noopener">Microsoft AutoGen 官方文档</a>
+        <span class="desc">多智能体（Multi-Agent）协作框架的代表，了解多个 Agent 如何分工合作。</span></li>
+    </ol>
+    <p style="color:#a0a6b4;font-size:13px;">提示：Agent 技术迭代很快，链接指向的资料以「概念与原理」为主，相对稳定；具体产品用法建议再查最新官方文档。</p>
+  </section>
+
+  <footer>concept-learner · 概念学习资料生成器 · 2026-09</footer>
+</div>
+
+<script>
+  document.querySelectorAll('.quiz-item').forEach(function (item) {
+    var answer = item.getAttribute('data-answer');
+    var opts = item.querySelectorAll('.opt');
+    var fb = item.querySelector('.fb');
+    var fbTitle = fb.querySelector('b');
+    opts.forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        opts.forEach(function (o) { o.classList.remove('sel', 'correct', 'wrong'); });
+        var right = opt.getAttribute('data-key') === answer;
+        opt.classList.add(right ? 'correct' : 'wrong');
+        if (!right) {
+          opts.forEach(function (o) { if (o.getAttribute('data-key') === answer) o.classList.add('correct'); });
+        }
+        fbTitle.textContent = (right ? '✓ 答对了！' : '✗ 再想想。') + ' · 解析';
+        fb.classList.remove('ok', 'no');
+        fb.classList.add(right ? 'ok' : 'no', 'show');
+      });
+    });
+  });
+</script>
+</body>
+</html>

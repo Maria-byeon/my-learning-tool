@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概念学习：Skill（AI 技能）</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --ink-soft: #5b6472;
+    --brand: #8b5cf6;
+    --brand-dark: #6d3fd6;
+    --brand-soft: #f1ebfe;
+    --accent: #4f6ef7;
+    --accent-soft: #eef1fe;
+    --warn: #d97706;
+    --warn-soft: #fdf3e3;
+    --line: #e6e8f0;
+    --radius: 16px;
+    --shadow: 0 6px 24px rgba(31, 36, 48, .06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  header.hero {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 40px 36px 36px;
+    box-shadow: 0 12px 32px rgba(139, 92, 246, .28);
+    margin-bottom: 28px;
+  }
+  header.hero .tag {
+    display: inline-block; font-size: 13px; letter-spacing: .12em;
+    background: rgba(255,255,255,.18); border-radius: 999px;
+    padding: 4px 14px; margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 32px; line-height: 1.3; margin-bottom: 10px; }
+  header.hero p.sub { color: rgba(255,255,255,.85); font-size: 16px; }
+
+  .goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 20px 0 32px; }
+  .goal-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .goal-card .num {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--brand-soft); color: var(--brand-dark); font-weight: 700; font-size: 15px; margin-bottom: 10px;
+  }
+  .goal-card p { color: var(--ink-soft); font-size: 14.5px; }
+
+  section.block {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  section.block h2 { font-size: 21px; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  section.block h2 .ico {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px;
+    background: var(--brand-soft); color: var(--brand-dark);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  section.block h3 { font-size: 16.5px; margin: 22px 0 8px; color: var(--ink); }
+  section.block p { color: var(--ink-soft); margin-bottom: 12px; }
+  section.block ul, section.block ol { color: var(--ink-soft); padding-left: 22px; margin-bottom: 12px; }
+  section.block li { margin-bottom: 8px; }
+  strong { color: var(--ink); }
+  .hl { background: var(--brand-soft); color: var(--brand-dark); padding: 0 5px; border-radius: 5px; font-weight: 600; }
+  code {
+    background: #eef0f6; border: 1px solid var(--line); border-radius: 6px;
+    padding: 1px 7px; font-size: 13.5px; font-family: Consolas, "Courier New", monospace; color: var(--ink);
+  }
+
+  .callout {
+    border-left: 4px solid var(--brand); background: var(--brand-soft);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0; font-size: 15px;
+  }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.good { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* 文件结构示意 */
+  .filetree {
+    background: #0f1220; border-radius: 14px; padding: 18px 22px;
+    font-family: Consolas, "Courier New", monospace; font-size: 14px; line-height: 2;
+    margin: 14px 0; color: #cbd5e1; overflow-x: auto;
+  }
+  .filetree .dir { color: #8b5cf6; font-weight: 700; }
+  .filetree .file { color: #e2e8f0; }
+  .filetree .cmt { color: #64748b; }
+  .filetree .hl-line { background: rgba(139, 92, 246, .18); border-radius: 4px; display: inline-block; padding: 0 6px; }
+
+  /* 组成三块 */
+  .part-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+  .part { background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .part .t { font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .part .d { font-size: 13.5px; color: var(--ink-soft); }
+  .part.p1 { border-top: 3px solid var(--brand); }
+  .part.p2 { border-top: 3px solid var(--accent); }
+  .part.p3 { border-top: 3px solid #ec4899; }
+
+  /* 运行流程 */
+  .flow { margin: 16px 0; }
+  .flow .frow { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 0; position: relative; padding-bottom: 18px; }
+  .flow .frow::before {
+    content: ""; position: absolute; left: 17px; top: 36px; bottom: 0;
+    width: 2px; background: var(--brand-soft);
+  }
+  .flow .frow:last-child { padding-bottom: 0; }
+  .flow .frow:last-child::before { display: none; }
+  .flow .fnum {
+    flex: 0 0 36px; height: 36px; border-radius: 50%; z-index: 1;
+    background: var(--brand); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .flow .fbody { padding-top: 4px; }
+  .flow .fbody .ft { font-weight: 700; color: var(--ink); }
+  .flow .fbody .fd { font-size: 14px; color: var(--ink-soft); }
+
+  table.diff { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  table.diff th { text-align: left; background: var(--brand-soft); color: var(--brand-dark); padding: 10px 12px; border: 1px solid var(--line); font-weight: 600; }
+  table.diff td { padding: 10px 12px; border: 1px solid var(--line); color: var(--ink-soft); vertical-align: top; }
+  table.diff td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  .quiz-item { background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .quiz-item .q { font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+  .quiz-item .q .qn {
+    display: inline-block; background: var(--warn); color: #fff; border-radius: 7px;
+    padding: 1px 9px; font-size: 12.5px; margin-right: 8px; vertical-align: 2px;
+  }
+  .quiz-item .opts { display: grid; gap: 8px; margin-bottom: 10px; }
+  .quiz-item .opt {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 14px; font-size: 14.5px;
+    color: var(--ink-soft); cursor: pointer; transition: all .15s; background: #fff;
+  }
+  .quiz-item .opt:hover { border-color: var(--brand); background: var(--brand-soft); }
+  .quiz-item .opt.correct { border-color: var(--accent); background: var(--accent-soft); color: #067a58; font-weight: 600; }
+  .quiz-item .opt.wrong { border-color: #e25563; background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb { display: none; font-size: 14px; padding: 10px 14px; border-radius: 10px; margin-top: 6px; }
+  .quiz-item .fb.show { display: block; }
+  .quiz-item .fb.ok { background: var(--accent-soft); color: #067a58; }
+  .quiz-item .fb.no { background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb b { display: block; margin-bottom: 2px; }
+
+  ol.sources li { margin-bottom: 12px; font-size: 14.5px; }
+  ol.sources a { color: var(--brand-dark); text-decoration: none; font-weight: 600; word-break: break-all; }
+  ol.sources a:hover { text-decoration: underline; }
+  ol.sources .desc { color: var(--ink-soft); font-size: 13.5px; display: block; }
+
+  footer { text-align: center; color: #a0a6b4; font-size: 13px; margin-top: 28px; }
+  @media (max-width: 560px) {
+    section.block { padding: 22px 18px; }
+    header.hero { padding: 30px 22px; }
+    header.hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">CONCEPT · 概念学习资料</span>
+    <h1>Skill（AI 技能）</h1>
+    <p class="sub">你正在用的这份「concept-learner」就是一个技能——这份资料顺便把技能本身讲清楚。</p>
+  </header>
+
+  <!-- 学习目标 -->
+  <section class="block">
+    <h2><span class="ico">🎯</span>学习目标</h2>
+    <div class="goal-grid">
+      <div class="goal-card"><div class="num">1</div><p>能解释 Skill 是什么、它解决什么问题，以及它和普通提示词（Prompt）的区别。</p></div>
+      <div class="goal-card"><div class="num">2</div><p>能拆出一个技能包的组成（元信息 / 步骤正文 / 附带资产），讲清它被触发的机制。</p></div>
+      <div class="goal-card"><div class="num">3</div><p>能区分 Skill、Tool、Agent、MCP 四者的分工，并说出使用技能的注意事项。</p></div>
+    </div>
+  </section>
+
+  <!-- 核心问题 -->
+  <section class="block">
+    <h2><span class="ico">❓</span>带着 3 个核心问题去学</h2>
+    <ul>
+      <li><strong>问题一：</strong>AI 助手明明已经很会聊天，为什么还需要「技能」？直接说清楚要求不就行了吗？</li>
+      <li><strong>问题二：</strong>一个技能文件（比如 SKILL.md）里通常写了什么？助手靠什么判断「该不该调用它」？</li>
+      <li><strong>问题三：</strong>Skill、Tool、Agent、MCP 这几个词天天一起出现，它们各自负责哪一环？</li>
+    </ul>
+  </section>
+
+  <!-- 个人化解释 -->
+  <section class="block">
+    <h2><span class="ico">💡</span>个人化解释：技能 = 给 AI 的「岗位说明书 + 标准作业手册」</h2>
+    <p>把 AI 助手想成一个能力很强、但每次上班都「失忆」的新员工。它的问题在于：哪怕昨天你手把手教过它一套流程，今天它又全忘了，你得从头再教一遍。</p>
+    <p><strong>Skill（技能）就是解决这个问题的文件</strong>：把你教它的那套「怎么做」写成一份标准作业手册（通常是一个 <code>SKILL.md</code> 文本文件），放进指定的文件夹。以后只要任务对口，助手会自己翻开这本手册、照章办事——流程再复杂也不会走样，换台设备、换个人也能复用。</p>
+    <div class="callout">
+      一句话记忆：<strong>Skill 把「一次讲清楚」升级成「永久可复用」。</strong>它的价值在于沉淀流程，让高质量的做事方法可以打包、分享、随时调用。
+    </div>
+    <p>一个就近的例子：<strong>concept-learner</strong> 就是你现在这个学习工具里装的一个技能。它的手册里写着「生成学习资料必须包含：学习目标、3 个核心问题、通俗解释、机制拆解、应用场景、辨析、3 道自测题、可核查来源」——你连说了三次「帮我学一个概念」，三次产出的结构都一模一样，靠的就是这本手册。</p>
+  </section>
+
+  <!-- 核心机制拆解 -->
+  <section class="block">
+    <h2><span class="ico">⚙️</span>核心机制与组成拆解</h2>
+
+    <h3>① 一个技能包长什么样</h3>
+    <p>以主流的 <code>SKILL.md</code> 形式为例，技能是「一个文件夹」，通常包含：</p>
+    <div class="filetree">
+      <span class="dir">📁 my-skill/</span><br>
+      &nbsp;&nbsp;├─ <span class="file">SKILL.md</span> <span class="cmt">← 核心：元信息 + 操作步骤</span><br>
+      &nbsp;&nbsp;├─ <span class="file">assets/</span> <span class="cmt">可选：参考文档、模板、示例</span><br>
+      &nbsp;&nbsp;└─ <span class="file">scripts/</span> <span class="cmt">可选：配套脚本或工具</span>
+    </div>
+    <div class="part-grid">
+      <div class="part p1"><span class="t">📇 元信息（frontmatter）</span><div class="d">文件开头的 <code>name</code> 与 <code>description</code>。description 写清「什么场景下用这个技能」，它是助手判断要不要调用的<strong>触发开关</strong>。</div></div>
+      <div class="part p2"><span class="t">📋 步骤正文</span><div class="d">按顺序写清完成任务的流程、质量标准、注意事项，相当于「标准作业手册」本体。可长可短，结构化最利于执行。</div></div>
+      <div class="part p3"><span class="t">📎 附带资产</span><div class="d">模板文件、参考示例、脚本、清单等。让技能携带「素材」，执行时不必现找。</div></div>
+    </div>
+
+    <h3>② 技能的运行机制：五个环节</h3>
+    <div class="flow">
+      <div class="frow"><div class="fnum">1</div><div class="fbody"><span class="ft">提出请求</span><div class="fd">你发出任务，例如「帮我学一下 XX 概念」。</div></div></div>
+      <div class="frow"><div class="fnum">2</div><div class="fbody"><span class="ft">匹配触发</span><div class="fd">助手对照已安装技能各自的 <code>description</code>，判断哪个技能与任务对口。写得好不好，直接决定触发准不准。</div></div></div>
+      <div class="frow"><div class="fnum">3</div><div class="fbody"><span class="ft">加载手册</span><div class="fd">把对应 <code>SKILL.md</code> 的内容读进上下文，助手此刻「知道该怎么做了」。</div></div></div>
+      <div class="frow"><div class="fnum">4</div><div class="fbody"><span class="ft">照章执行</span><div class="fd">按步骤工作；期间可调用工具（搜索、读写文件等），必要时参考附带资产。</div></div></div>
+      <div class="frow"><div class="fnum">5</div><div class="fbody"><span class="ft">交付结果</span><div class="fd">按手册定义的质量标准输出成品，流程结束。</div></div></div>
+    </div>
+
+    <h3>③ 为什么说它解决了「提示词工程」的痛点</h3>
+    <p>早期让 AI 按固定流程做事，要把整段指令反复粘贴进每一条对话（提示词工程），又长又易错又难维护。技能把这段指令<b>外置成文件、按需加载</b>：对话更干净、流程更稳定、经验可积累、团队可共享，还常配有安全检查机制。</p>
+  </section>
+
+  <!-- 应用场景 -->
+  <section class="block">
+    <h2><span class="ico">🚀</span>一个具体应用场景：给备考助手装一个「时政卡」技能</h2>
+    <p>设想你在积累申论与专业课共用的时政素材。每次都口述要求，AI 产出的格式会飘忽不定。于是你写一个技能 <code>shizheng-card</code>：</p>
+    <div class="callout">
+      在 <code>description</code> 里写：<em>「当用户要求整理时政热点 / 生成申论素材卡时使用。」</em><br>
+      在步骤正文里规定：<em>「每张卡片须含 ①事件概述（100 字）②政策/理论背景 ③社会意义 ④可用论点与适用主题 ⑤信息来源。检索后须核实来源再输出。」</em>
+    </div>
+    <p>之后你只需说「整理今天的时政」，助手就会自动套用这套规范产出卡片。收益有三点：</p>
+    <ul>
+      <li><strong>稳定：</strong>格式永远统一，直接并入你的笔记体系，无需二次整理。</li>
+      <li><strong>可靠：</strong>手册里写死了「核实来源」这类关键步骤，不依赖 AI 当天的心情。</li>
+      <li><strong>积累：</strong>技能跟着你的资料夹走，换电脑、升级助手都不丢。</li>
+    </ul>
+  </section>
+
+  <!-- 辨析与边界 -->
+  <section class="block">
+    <h2><span class="ico">⚠️</span>容易混淆的地方 &amp; 使用边界</h2>
+    <table class="diff">
+      <tr><th>概念</th><th>关键区别</th></tr>
+      <tr><td>Skill vs Prompt</td><td>Prompt 是一次性写在请求里的话；Skill 是<strong>持久化的复用单元</strong>，含结构化流程与附带资产，按需加载。</td></tr>
+      <tr><td>Skill vs Tool</td><td>Tool（工具）是<strong>可调用的函数接口</strong>，一次调用、返回结果（如「搜索」「发邮件」）；Skill 是<strong>「怎么完成任务」的说明书</strong>，内部可编排多次工具调用。</td></tr>
+      <tr><td>Skill vs Agent</td><td>Agent 是能自主规划行动的<strong>主体</strong>；Skill 是它携带的<strong>专业能力包</strong>。一个 Agent 可同时挂载多个技能，按任务挑选使用。</td></tr>
+      <tr><td>Skill vs MCP</td><td>MCP 是给「工具/数据」定<strong>统一接口协议</strong>（让不同系统能互通）；Skill 装的是<strong>操作流程与知识</strong>。二者互补：MCP 提供能力通道，技能指挥怎么用。</td></tr>
+    </table>
+
+    <h3>使用边界：技能常见误区</h3>
+    <ul>
+      <li><strong>技能改变不了模型的基础能力：</strong>它优化「怎么做」，无法凭空造出模型本就不会的推理。期望要合理。</li>
+      <li><strong>触发依赖描述质量：</strong><code>description</code> 写得含糊，助手可能漏触发或误触发——写清楚「什么请求该用它」很关键。</li>
+      <li><strong>有安全与质量成本：</strong>技能可能携带脚本、指令外部来源的内容，安装前应做安全审查；效果参差，需实际测试。</li>
+      <li><strong>占用上下文：</strong>技能被加载后其内容进入上下文，技能过多或过大会挤占窗口、推高成本——只装常用且精简的技能。</li>
+    </ul>
+    <div class="callout warn">
+      判断口诀：<strong>「凡是希望你每次都用同一套高质量流程做的事，都值得沉淀成一个技能」</strong>——一次写清，长期复用。
+    </div>
+  </section>
+
+  <!-- 自测 -->
+  <section class="block">
+    <h2><span class="ico">📝</span>3 道自测题（点选项查看结果）</h2>
+
+    <div class="quiz-item" data-answer="B">
+      <div class="q"><span class="qn">第 1 题</span>Skill（技能）在 AI 助手中主要解决什么问题？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 让模型的推理能力变强、知识变多</div>
+        <div class="opt" data-key="B">B. 把「怎么做某类任务」的方法沉淀为可复用文件，让助手按需加载、稳定执行</div>
+        <div class="opt" data-key="C">C. 替代用户输入，自动完成所有对话</div>
+        <div class="opt" data-key="D">D. 让模型能离线运行</div>
+      </div>
+      <div class="fb"><b>解析</b>技能封装的是「流程与知识」而非「模型能力」——模型的基础能力并不因技能而改变，价值在复用与稳定。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="C">
+      <div class="q"><span class="qn">第 2 题</span>技能文件（SKILL.md）里的 description 字段，最主要的作用是？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 给文件取一个好看的名字，方便人类阅读</div>
+        <div class="opt" data-key="B">B. 记录技能的版本号与作者信息</div>
+        <div class="opt" data-key="C">C. 帮助助手判断「什么样的请求应该触发这个技能」</div>
+        <div class="opt" data-key="D">D. 对技能内容进行加密保护</div>
+      </div>
+      <div class="fb"><b>解析</b>description 相当于技能的「门牌与简介」，是助手做触发匹配的依据；写清楚适用范围能显著提升触发准确率。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="A">
+      <div class="q"><span class="qn">第 3 题</span>关于 Skill 与 Tool（工具）的区别，下列说法准确的是？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. Tool 是可调用的函数接口，一次调用返回结果；Skill 是指导如何完成任务的说明与流程，内部可编排多个工具调用</div>
+        <div class="opt" data-key="B">B. 两者完全相同，只是叫法不同</div>
+        <div class="opt" data-key="C">C. Tool 只能在联网时使用，Skill 只能离线使用</div>
+        <div class="opt" data-key="D">D. Skill 比 Tool 更底层，Skill 是 Tool 的一种</div>
+      </div>
+      <div class="fb"><b>解析</b>工具是「手脚」，一次调用干一件事；技能是「手册」，告诉 AI 用哪些手脚、按什么顺序把整件事干完。技能可以编排工具，方向与 D 相反。</div>
+    </div>
+  </section>
+
+  <!-- 资料来源 -->
+  <section class="block">
+    <h2><span class="ico">🔗</span>可核查的资料来源</h2>
+    <ol class="sources">
+      <li><a href="https://www.anthropic.com/news/skills" target="_blank" rel="noopener">Anthropic 官方博客：Introducing Agent Skills</a>
+        <span class="desc">提出 Agent Skills 概念的官方介绍，讲清技能与工具、助手的定位差异。</span></li>
+      <li><a href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">Anthropic 文档：Agent Skills 总览</a>
+        <span class="desc">SKILL.md 的标准写法、目录约定与触发机制的权威说明。</span></li>
+      <li><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP 官方网站（Model Context Protocol）</a>
+        <span class="desc">理解 MCP 与技能分工的必读资料——它为工具与数据提供统一接口协议。</span></li>
+      <li><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank" rel="noopener">OpenAI 官方文档：Function Calling</a>
+        <span class="desc">讲解「工具调用」机制的权威入门，用于对比技能与工具的差异。</span></li>
+      <li><a href="https://python.langchain.com/docs/concepts/tools/" target="_blank" rel="noopener">LangChain 官方文档：Tools 概念</a>
+        <span class="desc">主流 Agent 框架对工具、工具调用规范的体系化讲解。</span></li>
+    </ol>
+    <p style="color:#a0a6b4;font-size:13px;">提示：不同产品对「技能」的实现与命名有差异（如部分平台叫插件 / 技能 / Action），概念相通，具体规则以对应官方文档为准。</p>
+  </section>
+
+  <footer>concept-learner · 概念学习资料生成器 · 2026-09</footer>
+</div>
+
+<script>
+  document.querySelectorAll('.quiz-item').forEach(function (item) {
+    var answer = item.getAttribute('data-answer');
+    var opts = item.querySelectorAll('.opt');
+    var fb = item.querySelector('.fb');
+    var fbTitle = fb.querySelector('b');
+    opts.forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        opts.forEach(function (o) { o.classList.remove('correct', 'wrong'); });
+        var right = opt.getAttribute('data-key') === answer;
+        opt.classList.add(right ? 'correct' : 'wrong');
+        if (!right) {
+          opts.forEach(function (o) { if (o.getAttribute('data-key') === answer) o.classList.add('correct'); });
+        }
+        fbTitle.textContent = (right ? '✓ 答对了！' : '✗ 再想想。') + ' · 解析';
+        fb.classList.remove('ok', 'no');
+        fb.classList.add(right ? 'ok' : 'no', 'show');
+      });
+    });
+  });
+</script>
+</body>
+</html>

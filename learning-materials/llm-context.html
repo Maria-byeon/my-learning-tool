@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概念学习：大模型的上下文（Context）</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --ink-soft: #5b6472;
+    --brand: #0ea5a4;
+    --brand-dark: #0b7f7e;
+    --brand-soft: #e4f6f5;
+    --accent: #4f6ef7;
+    --accent-soft: #eef1fe;
+    --warn: #d97706;
+    --warn-soft: #fdf3e3;
+    --line: #e6e8f0;
+    --radius: 16px;
+    --shadow: 0 6px 24px rgba(31, 36, 48, .06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  header.hero {
+    background: linear-gradient(135deg, #0ea5a4 0%, #3b82c4 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 40px 36px 36px;
+    box-shadow: 0 12px 32px rgba(14, 165, 164, .28);
+    margin-bottom: 28px;
+  }
+  header.hero .tag {
+    display: inline-block; font-size: 13px; letter-spacing: .12em;
+    background: rgba(255,255,255,.18); border-radius: 999px;
+    padding: 4px 14px; margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 32px; line-height: 1.3; margin-bottom: 10px; }
+  header.hero p.sub { color: rgba(255,255,255,.85); font-size: 16px; }
+
+  .goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 20px 0 32px; }
+  .goal-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .goal-card .num {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--brand-soft); color: var(--brand-dark); font-weight: 700; font-size: 15px; margin-bottom: 10px;
+  }
+  .goal-card p { color: var(--ink-soft); font-size: 14.5px; }
+
+  section.block {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  section.block h2 { font-size: 21px; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  section.block h2 .ico {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px;
+    background: var(--brand-soft); color: var(--brand-dark);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  section.block h3 { font-size: 16.5px; margin: 22px 0 8px; color: var(--ink); }
+  section.block p { color: var(--ink-soft); margin-bottom: 12px; }
+  section.block ul, section.block ol { color: var(--ink-soft); padding-left: 22px; margin-bottom: 12px; }
+  section.block li { margin-bottom: 8px; }
+  strong { color: var(--ink); }
+  .hl { background: var(--brand-soft); color: var(--brand-dark); padding: 0 5px; border-radius: 5px; font-weight: 600; }
+
+  .callout {
+    border-left: 4px solid var(--brand); background: var(--brand-soft);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0; font-size: 15px;
+  }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.good { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* 上下文拼盘示意 */
+  .ctx-parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 16px 0; }
+  .part { border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: var(--ink-soft); border: 1.5px dashed var(--line); }
+  .part .t { font-weight: 700; color: var(--ink); font-size: 14px; }
+  .part.c1 { background: #e4f6f5; border-style: solid; border-color: #0ea5a4; }
+  .part.c2 { background: #eef1fe; border-style: solid; border-color: #4f6ef7; }
+  .part.c3 { background: #fdf3e3; border-style: solid; border-color: #d97706; }
+  .part.c4 { background: #fdeef0; border-style: solid; border-color: #e25563; }
+
+  /* 窗口条 */
+  .wbar { margin: 18px 0; }
+  .wbar .track {
+    background: #eef0f6; border-radius: 999px; height: 26px; position: relative; overflow: hidden; border: 1px solid var(--line);
+  }
+  .wbar .fill {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px;
+    background: linear-gradient(90deg, #0ea5a4, #4f6ef7); width: 72%;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 12px;
+    color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .wbar .cap { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+
+  .sugg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 14px 0; }
+  .sugg { background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 13.5px; color: var(--ink-soft); }
+  .sugg .t { font-weight: 700; color: var(--ink); margin-bottom: 4px; font-size: 14.5px; }
+
+  table.diff { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  table.diff th { text-align: left; background: var(--brand-soft); color: var(--brand-dark); padding: 10px 12px; border: 1px solid var(--line); font-weight: 600; }
+  table.diff td { padding: 10px 12px; border: 1px solid var(--line); color: var(--ink-soft); vertical-align: top; }
+  table.diff td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  .scenario {
+    background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin: 12px 0;
+  }
+  .scenario .step { display: flex; gap: 12px; margin-bottom: 12px; }
+  .scenario .step:last-child { margin-bottom: 0; }
+  .scenario .badge {
+    flex: 0 0 26px; height: 26px; border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  }
+  .scenario .txt { font-size: 14.5px; color: var(--ink-soft); }
+
+  .quiz-item { background: #fafbff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .quiz-item .q { font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+  .quiz-item .q .qn {
+    display: inline-block; background: var(--warn); color: #fff; border-radius: 7px;
+    padding: 1px 9px; font-size: 12.5px; margin-right: 8px; vertical-align: 2px;
+  }
+  .quiz-item .opts { display: grid; gap: 8px; margin-bottom: 10px; }
+  .quiz-item .opt {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 14px; font-size: 14.5px;
+    color: var(--ink-soft); cursor: pointer; transition: all .15s; background: #fff;
+  }
+  .quiz-item .opt:hover { border-color: var(--brand); background: var(--brand-soft); }
+  .quiz-item .opt.correct { border-color: var(--accent); background: var(--accent-soft); color: #067a58; font-weight: 600; }
+  .quiz-item .opt.wrong { border-color: #e25563; background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb { display: none; font-size: 14px; padding: 10px 14px; border-radius: 10px; margin-top: 6px; }
+  .quiz-item .fb.show { display: block; }
+  .quiz-item .fb.ok { background: var(--accent-soft); color: #067a58; }
+  .quiz-item .fb.no { background: #fdeef0; color: #b02a37; }
+  .quiz-item .fb b { display: block; margin-bottom: 2px; }
+
+  ol.sources li { margin-bottom: 12px; font-size: 14.5px; }
+  ol.sources a { color: var(--brand-dark); text-decoration: none; font-weight: 600; word-break: break-all; }
+  ol.sources a:hover { text-decoration: underline; }
+  ol.sources .desc { color: var(--ink-soft); font-size: 13.5px; display: block; }
+
+  footer { text-align: center; color: #a0a6b4; font-size: 13px; margin-top: 28px; }
+  @media (max-width: 560px) {
+    section.block { padding: 22px 18px; }
+    header.hero { padding: 30px 22px; }
+    header.hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">CONCEPT · 概念学习资料</span>
+    <h1>大模型的上下文（Context）</h1>
+    <p class="sub">上一份资料里提过「短期记忆 ≈ 上下文窗口」——这份资料就把这件事讲透。</p>
+  </header>
+
+  <!-- 学习目标 -->
+  <section class="block">
+    <h2><span class="ico">🎯</span>学习目标</h2>
+    <div class="goal-grid">
+      <div class="goal-card"><div class="num">1</div><p>能解释「上下文」是什么、上下文窗口限制的是什么，以及 token 与字数有何不同。</p></div>
+      <div class="goal-card"><div class="num">2</div><p>能说明上下文背后的核心机制（注意力），并说出长上下文的两三个现实问题。</p></div>
+      <div class="goal-card"><div class="num">3</div><p>面对「窗口装不下」时，能挑出合理的应对策略（截断 / 滑动 / 摘要 / 检索）。</p></div>
+    </div>
+  </section>
+
+  <!-- 核心问题 -->
+  <section class="block">
+    <h2><span class="ico">❓</span>带着 3 个核心问题去学</h2>
+    <ul>
+      <li><strong>问题一：</strong>模型明明「训练过海量资料」，为什么聊几句就忘、还得把材料重新贴给它？上下文和它的记忆到底什么关系？</li>
+      <li><strong>问题二：</strong>为什么窗口越大越贵？把一万页资料全塞进去，模型真的会认真看中间那部分吗？</li>
+      <li><strong>问题三：</strong>对话太长、材料太多、窗口装不下时，有哪些实用办法？各自牺牲了什么？</li>
+    </ul>
+  </section>
+
+  <!-- 个人化解释 -->
+  <section class="block">
+    <h2><span class="ico">💡</span>个人化解释：把上下文当成「模型的一次性办公桌」</h2>
+    <p>把模型想成一个实习生，它有两种「知识来源」：</p>
+    <ul>
+      <li><strong>脑子里的长期知识（参数）：</strong>来自训练阶段，相当于它读过的书、背过的课本，<b>不会随对话改变</b>。</li>
+      <li><strong>桌面上的材料（上下文）：</strong>每次开工前，你把材料摊在它桌上——你的提问、历史对话、贴进去的文档、工具查回的资料。<b>桌面就这么大，材料放不下就得取舍；这次对话结束，桌子就清空了。</b></li>
+    </ul>
+    <div class="callout">
+      一句话记忆：<strong>上下文 = 模型这一次「看得见、用得着」的临时工作区，而不是它的长期记忆。</strong>上下文窗口 = 这张桌子的大小（用 token 计量）。
+    </div>
+    <p>桌面上材料并非按「张数」而是按<b>「最小可拼装单元」</b>计量——文字会被切成 token，这就像材料被拆成乐高积木块：中文常用字大约 1 个字 ≈ 1 个 token，但一个英文单词常被拆成 1～2 个甚至更多 token。</p>
+  </section>
+
+  <!-- 核心机制拆解 -->
+  <section class="block">
+    <h2><span class="ico">⚙️</span>核心机制与组成拆解</h2>
+
+    <h3>① 上下文里到底装了些什么</h3>
+    <p>一次生成时，模型会把下面这些内容<b>拼成一段长长的输入</b>，这段输入就是「上下文」：</p>
+    <div class="ctx-parts">
+      <div class="part c1"><span class="t">🧭 系统设定</span><br>角色的身份、行为规则、输出格式要求</div>
+      <div class="part c2"><span class="t">💬 对话历史</span><br>你之前问过的、它答过的所有内容</div>
+      <div class="part c3"><span class="t">📄 临时材料</span><br>你贴入的文档、检索到的资料、工具返回的结果</div>
+      <div class="part c4"><span class="t">✍️ 当前提问</span><br>它此刻正要回答的那句话</div>
+    </div>
+
+    <h3>② 核心机制：注意力（Attention）</h3>
+    <p>Transformer 架构的大模型在生成每个词时，都会让注意力机制<b>「回头看」窗口里的全部内容</b>，按相关程度加权参考——这就是「上下文」被利用的方式。由此带来两个推论：</p>
+    <ul>
+      <li>上下文里的每个 token 都要参与计算，<strong>输入越长，计算量增长越快</strong>（自注意力近似随长度平方增长），这是长上下文「贵」的根本原因。</li>
+      <li>模型不是「逐字记忆」你贴的材料，而是<strong>边看边算重点</strong>，所以材料放的位置会影响它重视的程度。</li>
+    </ul>
+
+    <h3>③ 窗口的直观理解</h3>
+    <div class="wbar">
+      <div class="track"><div class="fill">72% · 已占用</div></div>
+      <div class="cap"><span>系统设定</span><span>对话历史 + 文档</span><span>当前提问</span></div>
+    </div>
+    <p>窗口一旦被占满，新内容进不来——常见的做法是把最早的内容挤出去（滑动窗口），或对旧对话做摘要压缩。</p>
+
+    <h3>④ 长上下文的三个现实问题</h3>
+    <div class="sugg-grid">
+      <div class="sugg"><span class="t">😵 中间迷失</span>研究（Lost in the Middle）发现：材料放中间，模型利用得最差；开头和结尾最容易被重视。</div>
+      <div class="sugg"><span class="t">💸 成本随长度涨</span>上下文全部按输入计费，贴 10 万字哪怕只用一句话，钱也按 10 万字收。</div>
+      <div class="sugg"><span class="t">⏳ 速度与失焦</span>越长生成越慢；无关内容太多还会稀释注意力，反而降低回答质量。</div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section class="block">
+    <h2><span class="ico">🚀</span>一个具体应用场景：整章教材塞不下，怎么办？</h2>
+    <p>备考时你想让 AI「把传播学教材第七章讲透，再出 10 道题」。教材一章约 2 万 token，而窗口只有 8K——<strong>不能硬塞</strong>，正确做法是：</p>
+    <div class="scenario">
+      <div class="step"><span class="badge">1</span><div class="txt"><strong>切块：</strong>把章节按小节切成 4 段，每段约 5K token，先分别让 AI 各写一段要点摘要（<b>分而治之，避免溢出窗口</b>）。</div></div>
+      <div class="step"><span class="badge">2</span><div class="txt"><strong>汇总：</strong>把 4 段摘要（约 2K token）一起放入窗口，让 AI 整合成结构化讲义——此时窗口完全够用。</div></div>
+      <div class="step"><span class="badge">3</span><div class="txt"><strong>出题与自查：</strong>基于讲义提问；某处答不上来时，只把那一个切块重新贴回去，而不是整章重贴。</div></div>
+      <div class="step"><span class="badge">4</span><div class="txt"><strong>沉淀：</strong>讲义存入笔记体系；下次复习只带讲义+少量原文，控制窗口占用，也省 token 成本。</div></div>
+    </div>
+    <div class="callout good">
+      这套「切块 → 摘要 → 按需检索」的方法，就是处理长文档的通用套路（工程上叫 map-reduce 与 RAG 的结合）。<b>窗口不够用不等于做不了长任务，关键在管理进入窗口的内容。</b>
+    </div>
+  </section>
+
+  <!-- 辨析与边界 -->
+  <section class="block">
+    <h2><span class="ico">⚠️</span>容易混淆的地方 &amp; 使用边界</h2>
+    <table class="diff">
+      <tr><th>概念</th><th>关键区别</th></tr>
+      <tr><td>上下文 vs 模型记忆（参数）</td><td>上下文是<strong>每次对话临时给</strong>的输入，用完即弃；参数是<strong>训练沉淀</strong>的长期知识，对话改变不了它。</td></tr>
+      <tr><td>窗口大小 vs 利用质量</td><td>窗口「装得下」不代表「用得好」——材料放中间会被忽视（Lost in the Middle），长窗口是必要非充分条件。</td></tr>
+      <tr><td>token vs 字 / 字符</td><td>token 是模型的最小处理单元：中文常 1 字 ≈ 1 token，英文单词常被拆成多个 token，不能按字数估算费用。</td></tr>
+      <tr><td>上下文长度 vs 上下文窗口</td><td>窗口是<strong>上限</strong>（模型架构与产品设定）；当前输入长度是<strong>实际用量</strong>。超限要么报错，要么被静默截断。</td></tr>
+      <tr><td>联网搜索 vs 上下文扩展</td><td>搜索是「把外部结果拿进来放进上下文」；上下文扩展是「让窗口装得更多」。两者不冲突，常配合使用。</td></tr>
+    </table>
+    <div class="callout warn">
+      使用边界提醒：别把上下文当保险箱——重要结论请让它<strong>当场输出并保存</strong>到文件/笔记里，因为对话一结束，这张「办公桌」上的东西就清空了。
+    </div>
+  </section>
+
+  <!-- 自测 -->
+  <section class="block">
+    <h2><span class="ico">📝</span>3 道自测题（点选项查看结果）</h2>
+
+    <div class="quiz-item" data-answer="B">
+      <div class="q"><span class="qn">第 1 题</span>关于「上下文窗口」，下列说法正确的是？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 它指模型在训练阶段读过的全部数据总量</div>
+        <div class="opt" data-key="B">B. 它限制单次生成时模型能同时「看到」的输入 token 上限</div>
+        <div class="opt" data-key="C">C. 窗口越大，模型回答一定越准确</div>
+        <div class="opt" data-key="D">D. 一个中文字符恰好等于一个 token，可直接按字数估算</div>
+      </div>
+      <div class="fb"><b>解析</b>窗口是「办公桌大小」——单次输入上限，与训练数据无关（A 错）；长窗口不等于高质量（C 错，见「中间迷失」）；token 与字数不能简单等同（D 错）。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="A">
+      <div class="q"><span class="qn">第 2 题</span>大模型之所以能「利用上下文」，核心依靠的是？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 注意力机制：生成每个词时回头对窗口内全部内容按相关度加权参考</div>
+        <div class="opt" data-key="B">B. 把对话历史逐字备份到硬盘，回答时再读出来</div>
+        <div class="opt" data-key="C">C. 联网实时搜索每一次需要的资料</div>
+        <div class="opt" data-key="D">D. 训练阶段把可能的话全部背下来</div>
+      </div>
+      <div class="fb"><b>解析</b>Transformer 的注意力让模型「边生成边扫视」窗口内所有 token；它不逐字备份（B）、不必然联网（C）、背的是参数而非本次输入（D）。</div>
+    </div>
+
+    <div class="quiz-item" data-answer="C">
+      <div class="q"><span class="qn">第 3 题</span>上下文窗口快满了，下列哪种处理思路最合理？</div>
+      <div class="opts">
+        <div class="opt" data-key="A">A. 继续贴更多资料——窗口是越多越好</div>
+        <div class="opt" data-key="B">B. 把所有旧内容删掉，只留最新一句话</div>
+        <div class="opt" data-key="C">C. 对旧对话做摘要压缩，或滑动丢弃次要内容，需要时只把相关片段（检索结果）放回窗口</div>
+        <div class="opt" data-key="D">D. 调低模型的随机性参数来腾出空间</div>
+      </div>
+      <div class="fb"><b>解析</b>C 是工程上的标准思路（摘要/滑动/RAG 组合）：保重点、控成本、按需取用。A 会让成本暴涨且中间内容被忽视；B 会丢失必要的来龙去脉；D 的采样参数与窗口大小无关。</div>
+    </div>
+  </section>
+
+  <!-- 资料来源 -->
+  <section class="block">
+    <h2><span class="ico">🔗</span>可核查的资料来源</h2>
+    <ol class="sources">
+      <li><a href="https://www.anthropic.com/news/context-engineering" target="_blank" rel="noopener">Anthropic 官方博客：Context Engineering（上下文工程）</a>
+        <span class="desc">系统讲解如何设计与管理进入上下文的内容——「如何设计办公桌上放什么」的权威指南。</span></li>
+      <li><a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">Lost in the Middle: How Language Models Use Long Contexts（论文）</a>
+        <span class="desc">证明模型对长上下文中间部分利用最差的经典研究，理解长窗口局限的必读文献。</span></li>
+      <li><a href="https://arxiv.org/abs/2308.14508" target="_blank" rel="noopener">LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding</a>
+        <span class="desc">主流的长上下文评测基准，了解「长窗口到底有没有被用好」如何被科学检验。</span></li>
+      <li><a href="https://platform.openai.com/tokenizer" target="_blank" rel="noopener">OpenAI Tokenizer 在线工具</a>
+        <span class="desc">把任意文本贴进去，直观看到它被切成多少个 token——中英文计费差异一看便知。</span></li>
+      <li><a href="https://arxiv.org/abs/2104.09864" target="_blank" rel="noopener">RoFormer: Enhanced Transformer with Rotary Position Embedding（RoPE 原始论文）</a>
+        <span class="desc">讲清位置编码如何让模型区分「第 1 句」和「第 5000 句」，是长上下文能力的关键一环。</span></li>
+    </ol>
+    <p style="color:#a0a6b4;font-size:13px;">提示：各家模型的具体窗口大小随版本快速变化，数值以官方模型文档为准；本页聚焦相对稳定的原理与方法。</p>
+  </section>
+
+  <footer>concept-learner · 概念学习资料生成器 · 2026-09</footer>
+</div>
+
+<script>
+  document.querySelectorAll('.quiz-item').forEach(function (item) {
+    var answer = item.getAttribute('data-answer');
+    var opts = item.querySelectorAll('.opt');
+    var fb = item.querySelector('.fb');
+    var fbTitle = fb.querySelector('b');
+    opts.forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        opts.forEach(function (o) { o.classList.remove('correct', 'wrong'); });
+        var right = opt.getAttribute('data-key') === answer;
+        opt.classList.add(right ? 'correct' : 'wrong');
+        if (!right) {
+          opts.forEach(function (o) { if (o.getAttribute('data-key') === answer) o.classList.add('correct'); });
+        }
+        fbTitle.textContent = (right ? '✓ 答对了！' : '✗ 再想想。') + ' · 解析';
+        fb.classList.remove('ok', 'no');
+        fb.classList.add(right ? 'ok' : 'no', 'show');
+      });
+    });
+  });
+</script>
+</body>
+</html>
