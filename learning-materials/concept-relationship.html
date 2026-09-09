@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent、大模型的上下文、Skill 三者关系</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --ink-soft: #5b6472;
+    --blue: #3b82f6;
+    --blue-soft: #eaf1fe;
+    --cyan: #0ea5e9;
+    --cyan-soft: #e6f6fe;
+    --violet: #8b5cf6;
+    --violet-soft: #f1ebfe;
+    --line: #e6e8f0;
+    --radius: 16px;
+    --shadow: 0 6px 24px rgba(31, 36, 48, .06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  header.hero {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 55%, #ec4899 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 40px 36px 36px;
+    box-shadow: 0 12px 32px rgba(99, 102, 241, .30);
+    margin-bottom: 28px;
+  }
+  header.hero .tag {
+    display: inline-block; font-size: 13px; letter-spacing: .12em;
+    background: rgba(255,255,255,.18); border-radius: 999px;
+    padding: 4px 14px; margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; }
+  header.hero p.sub { color: rgba(255,255,255,.88); font-size: 15.5px; }
+
+  section.block {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  section.block h2 { font-size: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  section.block h2 .ico {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+  section.block p { color: var(--ink-soft); margin-bottom: 12px; }
+  strong { color: var(--ink); }
+
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 8px 0 4px; }
+  .role {
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px; background: #fafbff;
+  }
+  .role .role-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .role .dot { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 12px; }
+  .role .role-name { font-weight: 700; font-size: 16px; }
+  .role .role-tag {
+    display: inline-block; font-size: 12px; border-radius: 999px;
+    padding: 1px 10px; margin-bottom: 10px; font-weight: 600;
+  }
+  .role .role-desc { font-size: 14px; color: var(--ink-soft); }
+  .role.r-ctx { border-top: 3px solid var(--blue); }
+  .role.r-ctx .dot { background: var(--blue); }
+  .role.r-ctx .role-tag { background: var(--blue-soft); color: #2563eb; }
+  .role.r-agent { border-top: 3px solid var(--violet); }
+  .role.r-agent .dot { background: var(--violet); }
+  .role.r-agent .role-tag { background: var(--violet-soft); color: #7c3aed; }
+  .role.r-skill { border-top: 3px solid var(--cyan); }
+  .role.r-skill .dot { background: var(--cyan); }
+  .role.r-skill .role-tag { background: var(--cyan-soft); color: #0284c7; }
+
+  /* 关系示意图 */
+  .diagram { margin: 18px 0 6px; }
+  .rel-row { display: flex; gap: 14px; align-items: stretch; justify-content: center; flex-wrap: wrap; }
+  .rel-node {
+    border-radius: 14px; padding: 16px 20px; text-align: center; width: 200px;
+    border: 1px solid var(--line);
+  }
+  .rel-node .n-t { font-weight: 700; font-size: 15.5px; }
+  .rel-node .n-s { font-size: 13px; margin-top: 2px; opacity: .85; }
+  .rel-node.n-ctx { background: var(--blue-soft); color: #1d4ed8; border-color: #bfdbfe; }
+  .rel-node.n-method { background: var(--cyan-soft); color: #0369a1; border-color: #bae6fd; }
+  .rel-node.n-agent {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none;
+    box-shadow: 0 10px 24px rgba(99, 102, 241, .32);
+  }
+  .rel-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 13px; }
+  .rel-arrow .a-line { width: 2px; height: 26px; background: linear-gradient(var(--blue), var(--violet)); border-radius: 2px; }
+  .rel-arrow .a-caret { font-size: 16px; line-height: 1; }
+  .rel-arrow .a-txt { font-size: 12.5px; margin-top: 3px; white-space: nowrap; }
+  .rel-arrow.method { position: relative; }
+
+  .flow-arrow { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--violet); font-weight: 700; margin: 8px 0; font-size: 14px; }
+  .flow-arrow .l { flex: 1; height: 2px; background: linear-gradient(90deg, var(--blue), var(--violet)); border-radius: 2px; max-width: 70px; }
+  .flow-arrow .r { flex: 1; height: 2px; background: linear-gradient(90deg, var(--violet), #ec4899); border-radius: 2px; max-width: 70px; }
+
+  .bottom-note {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: #fafbff; border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; margin-top: 20px;
+  }
+  .bottom-note .bi { font-size: 20px; flex: 0 0 26px; }
+
+  .callout {
+    border-left: 4px solid var(--violet); background: var(--violet-soft);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 14px 0 0; font-size: 15px;
+  }
+  .callout strong { color: #6d28d9; }
+
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 4px; }
+  .legend .lg {
+    font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 12px; color: var(--ink-soft); background: #fafbff;
+  }
+  .legend .lg b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">概念关系 · 概念学习</span>
+    <h1>Agent、大模型的上下文、Skill<br>三者关系</h1>
+    <p class="sub">上下文提供"视野"，Skill 提供"方法"，Agent 是那个真正动手的执行者。</p>
+  </header>
+
+  <section class="block">
+    <h2><span class="ico" style="background:var(--violet-soft);color:#7c3aed;">🧩</span>三位各是什么</h2>
+    <div class="role-grid">
+      <div class="role r-ctx">
+        <div class="role-head"><span class="dot"></span><span class="role-name">大模型的上下文</span></div>
+        <span class="role-tag">信息环境</span>
+        <p class="role-desc">Agent 工作时可用的信息环境和工具，决定了 Agent 能获取什么知识。</p>
+      </div>
+      <div class="role r-agent">
+        <div class="role-head"><span class="dot"></span><span class="role-name">Agent</span></div>
+        <span class="role-tag">执行者</span>
+        <p class="role-desc">根据上下文做决策和行动的智能体，它是那个做事的执行者。</p>
+      </div>
+      <div class="role r-skill">
+        <div class="role-head"><span class="dot"></span><span class="role-name">Skill</span></div>
+        <span class="role-tag">方法库</span>
+        <p class="role-desc">固化下来的标准操作流程，让 Agent 能稳定复用特定任务的经验。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2><span class="ico" style="background:var(--blue-soft);color:#2563eb;">🔗</span>它们怎么配合</h2>
+    <p>一句话记住分工：<strong>上下文给 Agent 提供"视野"，Skill 给 Agent 提供"方法"</strong>，最后由 Agent 完成决策与行动。</p>
+
+    <div class="diagram">
+      <div class="rel-row">
+        <div class="rel-node n-ctx">
+          <div class="n-t">大模型的上下文</div>
+          <div class="n-s">提供视野 · 信息与工具</div>
+        </div>
+        <div class="rel-arrow">
+          <div class="a-txt">输入</div>
+          <div class="a-line"></div>
+          <div class="a-caret">▼</div>
+        </div>
+        <div class="rel-node n-agent">
+          <div class="n-t">Agent</div>
+          <div class="n-s">决策 · 行动</div>
+        </div>
+        <div class="rel-arrow">
+          <div class="a-txt">指导</div>
+          <div class="a-line"></div>
+          <div class="a-caret">▼</div>
+        </div>
+        <div class="rel-node n-method">
+          <div class="n-t">Skill</div>
+          <div class="n-s">提供方法 · 标准流程</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>放大任何一个，Agent 都更强：</strong>上下文越大，Agent 能处理的信息越多；Skill 越完善，Agent 做事越专业。三者共同决定 Agent 的实际表现。
+    </div>
+
+    <div class="bottom-note">
+      <span class="bi">💡</span>
+      <div>
+        <strong style="color:var(--ink);">一句话总结</strong>
+        <p style="margin:4px 0 0;color:var(--ink-soft);font-size:14.5px;">
+          上下文决定 Agent <em>能看见什么</em>，Skill 决定 Agent <em>会怎么干</em>，
+          Agent 自己决定 <em>干不干、干什么</em>——三者缺一，表现都会打折扣。
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
